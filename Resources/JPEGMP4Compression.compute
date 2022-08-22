@@ -9,6 +9,7 @@ Texture2D<float4> Motion;
 RWTexture2D<float4> Result;
 
 //User Settings
+bool PreserveAlphaChannel;
 //Spacial Compression Settings
 bool UseSpacial;
 float CompressionThreshold;
@@ -77,6 +78,10 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 groupThreadID : SV_GroupThrea
 
     //Fetch Input Pixels and Convert to Yuv
     pixelBlock[groupThreadID.x][groupThreadID.y] = RGBToYuv(Input[groupThreadID.xy + groupID.xy * 8].rgb);
+
+    //Fetch alpha value, if Preserve alpha option is set
+    float alpha = PreserveAlphaChannel ? Input[groupThreadID.xy + groupID.xy * 8].a : 1.0;
+
     GroupMemoryBarrierWithGroupSync();
 
     //The entire temporal compression process takes place here
@@ -177,23 +182,23 @@ void CSMain (uint3 id : SV_DispatchThreadID, uint3 groupThreadID : SV_GroupThrea
         if(UseTemporal){
             //We simply lerp between the processed color and the last frame using the BitrateArtifacts parameter as the percentage
             #ifdef ACCURATE
-            Result[groupThreadID.xy + groupID.xy * 8] = lerp(float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * 0.125), 1.0),
+            Result[groupThreadID.xy + groupID.xy * 8] = lerp(float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * 0.125), alpha),
                                                             Last[groupThreadID.xy + groupID.xy * 8 - offset], BitrateArtifacts);
             #elif FAST
-            Result[groupThreadID.xy + groupID.xy * 8] = lerp(float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * float3(0.125, 1.0, 1.0)), 1.0),
+            Result[groupThreadID.xy + groupID.xy * 8] = lerp(float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * float3(0.125, 1.0, 1.0)), alpha),
                                                             Last[groupThreadID.xy + groupID.xy * 8 - offset], BitrateArtifacts);
             #endif
         }
         //If not, we simply read the processed color from the pixelBlock
         else{
             #ifdef ACCURATE
-            Result[groupThreadID.xy + groupID.xy * 8] = float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * 0.125), 1.0);
+            Result[groupThreadID.xy + groupID.xy * 8] = float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * 0.125), alpha);
             #elif FAST
-            Result[groupThreadID.xy + groupID.xy * 8] = float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * float3(0.125, 1.0, 1.0)), 1.0);
+            Result[groupThreadID.xy + groupID.xy * 8] = float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y] * float3(0.125, 1.0, 1.0)), alpha);
             #endif
         }
     }
     else
         //If we don't want to use Spacial compression we can just convert the input colors back to RGB and output them
-        Result[groupThreadID.xy + groupID.xy * 8] = float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y]), 1.0);
+        Result[groupThreadID.xy + groupID.xy * 8] = float4(YuvToRGB(pixelBlock[groupThreadID.x][groupThreadID.y]), alpha);
 }

@@ -116,6 +116,7 @@ public sealed class JPEG_MP4_Compression_Renderer : PostProcessEffectRenderer<JP
         dctShader.SetTexture(mainKernelHandle, "Motion", motionFrame);
         dctShader.SetTexture(mainKernelHandle, "Result", processedFrame);
         //Pass the user settings to the shader
+        dctShader.SetBool("PreserveAlphaChannel", settings.preserveAlphaChannel);
         dctShader.SetBool("UseSpacial", settings.useSpatialCompression);
         dctShader.SetFloat("CompressionThreshold", settings.compressionThreshold);
         dctShader.SetBool("UseTemporal", settings.useTemporalCompression.value && Application.isPlaying);

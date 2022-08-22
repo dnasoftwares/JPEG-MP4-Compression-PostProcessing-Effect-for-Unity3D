@@ -15,6 +15,11 @@ public sealed class JPEGPerformanceParameter : ParameterOverride<JPEGPerformance
 [PostProcess(typeof(JPEG_MP4_Compression_Renderer), PostProcessEvent.AfterStack, "Custom/JPEG\\MP4 Compression")]
 public sealed class JPEG_MP4_Compression : PostProcessEffectSettings
 {
+
+    [Tooltip("Preserve Alpha channel of input texture")]
+    // if preserveAlphaChannel sets true, Output texture keeps Input texture's alpha value.
+    public BoolParameter preserveAlphaChannel = new BoolParameter { value = false };
+ 
     [Header("Spatial Compression")]
     //useSpacialCompression controls if the classic JPEG compression should be applied
     [Tooltip("Use Spatial Compression")]
